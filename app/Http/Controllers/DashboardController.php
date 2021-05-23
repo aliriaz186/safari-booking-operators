@@ -2,15 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\AccommodationAndMeal;
 use App\CancelAutoRenew;
 use App\CertificateFiles;
 use App\Certificates;
 use App\CompanyDestinations;
 use App\CompanyOffice;
+use App\Exclusions;
+use App\Inclusions;
+use App\Rates;
+use App\Routes;
 use App\Subscription;
+use App\TourActivities;
+use App\TourFeatures;
+use App\TourPhotos;
+use App\Tours;
 use App\User;
 use App\UserCardDetails;
 use App\UserTokens;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use services\email_messages\ForgotPasswordMessage;
@@ -27,12 +37,17 @@ use services\email_services\SendEmailService;
 
 class DashboardController extends Controller
 {
+    public function tours()
+    {
+        $userId = Session::get('userId');
+        $tours = Tours::where('user_id', $userId)->get();
+        return view('dashboard.tours')->with(['tours' => $tours]);
+    }
+
     public function dashboard()
     {
         $userId = Session::get('userId');
         $user = User::where('id', $userId)->first();
-//        $user->tokenDetails = UserTokens::where('user_id', $userId)->first();
-//        $user->subscription = Subscription::where('user_id', $userId)->first();
         return view('dashboard.home')->with(['user' => $user]);
     }
 
@@ -51,7 +66,7 @@ class DashboardController extends Controller
     {
         $certificates = Certificates::where('id', $id)->first();
         $certificateFiles = CertificateFiles::where('certificate_id', $certificates->id)->get();
-        foreach ($certificateFiles as $file){
+        foreach ($certificateFiles as $file) {
             $file->delete();
         }
         $certificates->delete();
@@ -65,12 +80,14 @@ class DashboardController extends Controller
         return redirect()->back();
     }
 
-    public function addMoreTokens(){
+    public function addMoreTokens()
+    {
         $userCard = UserCardDetails::where('user_id', Session::get('userId'))->first();
         return view('dashboard.add-more-tokens')->with(['cardNumber' => $userCard->card_number ?? '', 'month' => $userCard->expiry_month ?? '', 'year' => $userCard->expiry_year ?? '']);
     }
 
-    public function saveNewToken(Request $request){
+    public function saveNewToken(Request $request)
+    {
         try {
             $userCard = UserCardDetails::where('user_id', Session::get('userId'))->first();
             $stripe = \Cartalyst\Stripe\Laravel\Facades\Stripe::setApiKey(env('STRIPE_SECRET'));
@@ -103,22 +120,25 @@ class DashboardController extends Controller
             session()->flash('msg', 'Tokens Purchased Successfully!');
             return redirect()->back();
 
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
 
         }
     }
 
-    public function billing(){
+    public function billing()
+    {
         return view('dashboard.billing');
     }
 
-    public function personalDetails(){
+    public function personalDetails()
+    {
         $user = User::where('id', Session::get('userId'))->first();
         return view('dashboard.personal-details')->with(['user' => $user]);
     }
 
-    public function saveProfileInfo(Request $request){
+    public function saveProfileInfo(Request $request)
+    {
         try {
             $user = User::where('id', Session::get('userId'))->first();
             $user->name = $request->name;
@@ -131,10 +151,10 @@ class DashboardController extends Controller
             $user->overview = $request->overview;
             $user->description = $request->description;
 
-            if (!empty($request->password)){
-                if ($request->password != $request->conpassword){
+            if (!empty($request->password)) {
+                if ($request->password != $request->conpassword) {
                     return redirect()->back()->withErrors(["Password Mismatch Error."]);
-                }else{
+                } else {
                     $user->password = md5($request->password);
                 }
             }
@@ -142,7 +162,7 @@ class DashboardController extends Controller
             if ($request->hasfile('profilepic')) {
                 $files = $request->file('profilepic');
                 foreach ($files as $file) {
-                    $name =  rand(0, 1000) .time() . '.' . $file->getClientOriginalExtension();
+                    $name = rand(0, 1000) . time() . '.' . $file->getClientOriginalExtension();
                     $file->move(base_path('/data') . '/user-files' . '/', $name);
                     $user->profile_pic = $name;
                 }
@@ -151,7 +171,7 @@ class DashboardController extends Controller
             if ($request->hasfile('companyLogo')) {
                 $files = $request->file('companyLogo');
                 foreach ($files as $file) {
-                    $name =  rand(0, 1000) .time() . '.' . $file->getClientOriginalExtension();
+                    $name = rand(0, 1000) . time() . '.' . $file->getClientOriginalExtension();
                     $file->move(base_path('/data') . '/user-files' . '/', $name);
                     $user->company_logo = $name;
                 }
@@ -159,44 +179,154 @@ class DashboardController extends Controller
             $result = $user->update();
             session()->flash('msg', 'Profile Updated Successfully!');
             return redirect()->back();
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
         }
     }
 
-    public function manageOffices(){
+    public function addTour(Request $request)
+    {
+        try {
+            $tours = new Tours();
+            $tours->user_id = Session::get('userId');
+            $tours->title = $request->title;
+            $tours->price = $request->price;
+            $tours->description = $request->description;
+            $tours->total_days = $request->totalDays;
+            $tours->game_drives = $request->gameDrives;
+            $tours->getting_around = $request->gettingAround;
+            $tours->back_to_airport = $request->backToAirport;
+
+            if ($request->hasfile('pic')) {
+                $files = $request->file('pic');
+                foreach ($files as $file) {
+                    $name = rand(0, 1000) . time() . '.' . $file->getClientOriginalExtension();
+                    $file->move(base_path('/data') . '/user-files' . '/', $name);
+                    $tours->picture = $name;
+                }
+            }
+            $tours->save();
+            for ($i = 0; $i < (int)$request->totalDays; $i++) {
+                if (!empty($request['routeDay' . $i]) && !empty($request['routeName' . $i])) {
+                    $routes = new Routes();
+                    $routes->tour_id = $tours->id;
+                    $routes->route_day = $request['routeDay' . $i];
+                    $routes->route_name = $request['routeName' . $i];
+                    $routes->save();
+                }
+            }
+            $featureList = $request->featuresList;
+            foreach ($featureList as $item) {
+                $tourFeatures = new TourFeatures();
+                $tourFeatures->tour_id = $tours->id;
+                $tourFeatures->feature_id = $item;
+                $tourFeatures->save();
+            }
+            $activitiesList = $request->activitiesList;
+            foreach ($activitiesList as $item) {
+                $tourActivities = new TourActivities();
+                $tourActivities->tour_id = $tours->id;
+                $tourActivities->activity = $item;
+                $tourActivities->save();
+            }
+            for ($j = 0; $j < (int)$request->totalDays; $j++) {
+                if (!empty($request['accommodationDay' . $j]) && !empty($request['accommodationName' . $j]) && !empty($request['accommodationMeal' . $j])) {
+                    $accommodationAndMeal = new AccommodationAndMeal();
+                    $accommodationAndMeal->tour_id = $tours->id;
+                    $accommodationAndMeal->day = $request['accommodationDay' . $j];
+                    $accommodationAndMeal->accommodation = $request['accommodationName' . $j];
+                    $accommodationAndMeal->meal = $request['accommodationMeal' . $j];
+                    $accommodationAndMeal->save();
+                }
+            }
+
+            for ($k = 0; $k < (int)$request->totalRates; $k++) {
+                if (!empty($request['startDate' . $k]) && !empty($request['endDate' . $k])) {
+                    $tourRates = new Rates();
+                    $tourRates->tour_id = $tours->id;
+                    $tourRates->start_date = $request['startDate' . $k];
+                    $tourRates->end_date = $request['endDate' . $k];
+                    $tourRates->solo_room = $request['solo' . $k];
+                    $tourRates->two_people = $request['twoPeople' . $k];
+                    $tourRates->three_people = $request['threePeople' . $k];
+                    $tourRates->four_people = $request['fourPeople' . $k];
+                    $tourRates->five_people = $request['fivePeople' . $k];
+                    $tourRates->six_people = $request['sixPeople' . $k];
+                    $tourRates->save();
+                }
+            }
+
+
+            $inclusionList = $request->inclusionList;
+            foreach ($inclusionList as $item) {
+                $inclusions = new Inclusions();
+                $inclusions->tour_id = $tours->id;
+                $inclusions->included_name = $item;
+                $inclusions->save();
+            }
+            $exclusionList = $request->exclusionList;
+            foreach ($exclusionList as $item) {
+                $exclusion = new Exclusions();
+                $exclusion->tour_id = $tours->id;
+                $exclusion->excluded_name = $item;
+                $exclusion->save();
+            }
+            if ($request->hasfile('tourPic')) {
+                $files = $request->file('tourPic');
+                foreach ($files as $file) {
+                    $name = rand(0, 1000) . time() . '.' . $file->getClientOriginalExtension();
+                    $file->move(base_path('/data') . '/user-files' . '/', $name);
+                    $tourPhotos = new TourPhotos();
+                    $tourPhotos->tour_id = $tours->id;
+                    $tourPhotos->photo = $name;
+                    $tourPhotos->save();
+                }
+            }
+            session()->flash('msg', 'Tour Added Successfully!');
+            return redirect('tours');
+        } catch (\Exception $exception) {
+            return redirect()->back()->withErrors([$exception->getMessage()]);
+        }
+    }
+
+    public function manageOffices()
+    {
         $userId = Session::get('userId');
         $offices = CompanyOffice::where('user_id', $userId)->get();
         return view('dashboard.manage-offices')->with(['offices' => $offices]);
     }
 
-    public function manageDestinations(){
+    public function manageDestinations()
+    {
         $userId = Session::get('userId');
         $destinations = CompanyDestinations::where('user_id', $userId)->get();
         return view('dashboard.manage-destinations')->with(['destinations' => $destinations]);
     }
 
-    public function deleteOffice($id){
+    public function deleteOffice($id)
+    {
         try {
             $office = CompanyOffice::where('id', $id)->delete();
             session()->flash('msg', 'Office deleted Successfully!');
             return redirect()->back();
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
         }
     }
 
-    public function deleteDestination($id){
+    public function deleteDestination($id)
+    {
         try {
             $of = CompanyDestinations::where('id', $id)->delete();
             session()->flash('msg', 'Destination deleted Successfully!');
             return redirect()->back();
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
         }
     }
 
-    public function addNewOffice(Request $request){
+    public function addNewOffice(Request $request)
+    {
         try {
             $office = new CompanyOffice();
             $office->address = $request->addressLineOne . $request->addressLineTwo;
@@ -208,15 +338,16 @@ class DashboardController extends Controller
             $office->save();
             session()->flash('msg', 'Office added Successfully!');
             return redirect()->back();
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
         }
     }
 
-    public function addNewDestination(Request $request){
+    public function addNewDestination(Request $request)
+    {
         try {
             $destinationslist = $request->destinationslist;
-            foreach ($destinationslist as $item){
+            foreach ($destinationslist as $item) {
                 $destinations = new CompanyDestinations();
                 $destinations->country = $item;
                 $destinations->user_id = Session::get('userId');
@@ -224,13 +355,14 @@ class DashboardController extends Controller
             }
             session()->flash('msg', 'Destination added Successfully!');
             return redirect()->back();
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
         }
     }
 
 
-    public function updateCardInfo(Request $request){
+    public function updateCardInfo(Request $request)
+    {
         try {
             $stripe = \Cartalyst\Stripe\Laravel\Facades\Stripe::setApiKey(env('STRIPE_SECRET'));
             $token = $stripe->tokens()->create([
@@ -254,53 +386,56 @@ class DashboardController extends Controller
             $result = $userCardDetails->update();
             session()->flash('msg', 'Card Updated Successfully!');
             return redirect()->back();
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
         }
     }
 
-    public function cancelAutoRenew(){
+    public function cancelAutoRenew()
+    {
         $cancelAuto = new CancelAutoRenew();
         $cancelAuto->user_id = Session::get('userId');
         $cancelAuto->save();
         return redirect()->back();
     }
 
-    public function turnOnAutoRenew(){
+    public function turnOnAutoRenew()
+    {
         $cancelAuto = CancelAutoRenew::where('user_id', Session::get('userId'))->first();
         $cancelAuto->delete();
         return redirect()->back();
     }
 
-    public function viewCertificate($id){
+    public function viewCertificate($id)
+    {
         $certificate = Certificates::where('id', $id)->first();
         $certificate->files = CertificateFiles::where('certificate_id', $certificate->id)->get();
         $certificate->user = User::where('id', $certificate->user_id)->first();
         return view('dashboard.view-certificate')->with(['certificate' => $certificate]);
     }
 
-    function getIPAddress() {
+    function getIPAddress()
+    {
         //whether ip is from the share internet
-        if(!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
             $ip = $_SERVER['HTTP_CLIENT_IP'];
-        }
-        //whether ip is from the proxy
+        } //whether ip is from the proxy
         elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        }
-//whether ip is from the remote address
-        else{
+        } //whether ip is from the remote address
+        else {
             $ip = $_SERVER['REMOTE_ADDR'];
         }
         return $ip;
     }
 
-    public function resetCertificatePassword(Request $request){
+    public function resetCertificatePassword(Request $request)
+    {
         try {
-            if ($request->password == ''){
+            if ($request->password == '') {
                 return redirect()->back()->withErrors(["Password Required."]);
             }
-            if ($request->password != $request->conpassword){
+            if ($request->password != $request->conpassword) {
                 return redirect()->back()->withErrors(["Password Mismatch Error."]);
             }
             $certificate = Certificates::where('id', $request->certificateId)->first();
@@ -320,25 +455,37 @@ class DashboardController extends Controller
 
             session()->flash('msg', 'Certificate Password Updated Successfully!');
             return redirect()->back();
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
         }
 
     }
 
-    public function downloadCertificateFile($certificateId, $fileId){
+    public function downloadCertificateFile($certificateId, $fileId)
+    {
         $file = CertificateFiles::where('id', $fileId)->first();
         $certificate = Certificates::where('id', $certificateId)->first();
         $user = User::where('id', $certificate->user_id)->first();
-        $file =  base_path('/data') . '/Certificate-Files-' . $user->id . '/' . $file->file_name;
+        $file = base_path('/data') . '/Certificate-Files-' . $user->id . '/' . $file->file_name;
         $type = mime_content_type($file);
         header('Content-Type:' . $type);
         header('Content-Length: ' . filesize($file));
         return readfile($file);
     }
 
-    public function showImage($fileId){
-        $file =  base_path('/data') . '/downloads' . '/' . $fileId . '.png';
+    public function showTourImage($tourId)
+    {
+        $file = Tours::where('id', $tourId)->first();
+        $file = base_path('/data') . '/user-files' . '/' . $file->picture;
+        $type = mime_content_type($file);
+        header('Content-Type:' . $type);
+        header('Content-Length: ' . filesize($file));
+        return readfile($file);
+    }
+
+    public function showImage($fileId)
+    {
+        $file = base_path('/data') . '/downloads' . '/' . $fileId . '.png';
         $type = mime_content_type($file);
         header('Content-Type:' . $type);
         header('Content-Length: ' . filesize($file));
@@ -346,31 +493,33 @@ class DashboardController extends Controller
         return readfile($file);
     }
 
-    public function downloadLogo($userId, $fileId){
+    public function downloadLogo($userId, $fileId)
+    {
 
-        if ($fileId == 0){
-            $file =  base_path('/data') . '/downloads' . '/zipFile.zip';
-        }else{
-            $file =  base_path('/data') . '/downloads' . '/' . $fileId . '.png';
+        if ($fileId == 0) {
+            $file = base_path('/data') . '/downloads' . '/zipFile.zip';
+        } else {
+            $file = base_path('/data') . '/downloads' . '/' . $fileId . '.png';
         }
 
         $type = mime_content_type($file);
         header('Content-Type:' . $type);
         header('Content-Length: ' . filesize($file));
-        if ($fileId == 0){
+        if ($fileId == 0) {
             header('Content-Disposition: attachment; filename="Warning-Logo-Zip.zip"');
-        }else{
-            header('Content-Disposition: attachment; filename="Warning-Logo-'.$fileId.'.png" ');
+        } else {
+            header('Content-Disposition: attachment; filename="Warning-Logo-' . $fileId . '.png" ');
         }
         return readfile($file);
     }
 
-    public function testingMail(){
+    public function testingMail()
+    {
         $message = new WorkProtected();
         $userId = Session::get('userId');
         $currentUser = User::where('id', $userId)->first();
         $certificates = Certificates::where('user_id', $userId)->first();
-        $emailBody = $message->message($currentUser , $certificates, 'sdsdvsdv');
+        $emailBody = $message->message($currentUser, $certificates, 'sdsdvsdv');
         return $emailBody;
     }
 
@@ -380,7 +529,7 @@ class DashboardController extends Controller
             $userId = Session::get('userId');
             $currentUser = User::where('id', $userId)->first();
             $userToken = UserTokens::where('user_id', $userId)->first();
-            if ((int)$userToken->token <= 0){
+            if ((int)$userToken->token <= 0) {
                 return redirect()->back()->withErrors(['You do not have tokens to create this certificate. Please buy more token from ADD MORE TOKENS section and try again!']);
             }
 
@@ -398,7 +547,7 @@ class DashboardController extends Controller
             if ($request->hasfile('fileOne')) {
                 $files = $request->file('fileOne');
                 foreach ($files as $file) {
-                    $name = $request->fileOneName . rand(0, 1000) .time() . '.' . $file->getClientOriginalExtension();
+                    $name = $request->fileOneName . rand(0, 1000) . time() . '.' . $file->getClientOriginalExtension();
                     $file->move(base_path('/data') . '/Certificate-Files-' . $userId . '/', $name);
                     $certificateFiles = new CertificateFiles();
                     $certificateFiles->certificate_id = $certificates->id;
@@ -464,7 +613,7 @@ class DashboardController extends Controller
             $subject = new SendEmailService(new EmailSubject("Your work has been protected by " . env('APP_NAME')));
             $mailTo = new EmailAddress($currentUser->email);
             $message = new WorkProtected();
-            $emailBody = $message->message($currentUser , $certificates, $randomPassword);
+            $emailBody = $message->message($currentUser, $certificates, $randomPassword);
             $body = new EmailBody($emailBody);
             $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
             $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
@@ -472,14 +621,15 @@ class DashboardController extends Controller
 
             session()->flash('msg', 'Certificate Created Successfully!');
             return redirect('my-protected-work');
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
 
         }
 
     }
 
-    function generateRandomString($length = 10) {
-        return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
+    function generateRandomString($length = 10)
+    {
+        return substr(str_shuffle(str_repeat($x = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length / strlen($x)))), 1, $length);
     }
 }

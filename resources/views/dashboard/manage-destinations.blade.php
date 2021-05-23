@@ -70,8 +70,8 @@
                             <div class="row">
                                 <div class="col-lg-6">
 
-                                    <div class="login-form">
-                                        <div class="input-box mt-30">
+                                    <div>
+                                        <div class="mt-30">
                                             <select  id="leaderMultiSelctdropdown" name="destinationslist[]" multiple="multiple"
                                                      style="width: 100%;border: solid 2px rgba(102, 102, 102, 0.12);border-radius: 5px;height: 70px;padding-left: 50px;background-color: white;">
                                                 <option value="">Select Multiple Tour Destinations</option>

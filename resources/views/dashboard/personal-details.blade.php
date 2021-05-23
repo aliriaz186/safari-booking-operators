@@ -14,7 +14,7 @@
             </div>
         @endif
         <h3 style="letter-spacing: 3px" class="mt-4 mb-3">UPDATE YOUR PERSONAL DETAILS</h3>
-        <form method="post" action="{{url("/save-profile-info")}}">
+        <form method="post" action="{{url("/save-profile-info")}}" enctype="multipart/form-data">
             {{csrf_field()}}
 
             <div class="container">

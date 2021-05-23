@@ -59,4 +59,9 @@ Route::get('cancel-auto-renew', "DashboardController@cancelAutoRenew")->middlewa
 Route::get('turnon-auto-renew', "DashboardController@turnOnAutoRenew")->middleware('dashboard');
 Route::get('view-certificate/{id}', "DashboardController@viewCertificate")->middleware('dashboard');
 Route::get('download-logo/{userId}/{fileId}', "DashboardController@downloadLogo")->middleware('dashboard');
-
+Route::get('tours', "DashboardController@tours")->middleware('dashboard');
+Route::get('/add-tour', function () {
+    return view('dashboard.add-tour');
+});
+Route::post('add-tour', "DashboardController@addTour")->middleware('dashboard');
+Route::get('show-tour-image/{id}', "DashboardController@showTourImage")->middleware('dashboard');
