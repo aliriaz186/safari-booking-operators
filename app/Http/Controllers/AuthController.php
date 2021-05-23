@@ -100,6 +100,24 @@ class AuthController extends Controller
         }
     }
 
+    public function viewUserFile($id){
+        $file = User::where('id', $id)->first();
+        $file = base_path('/data') . '/user-files' . '/' . $file->profile_pic;
+        $type = mime_content_type($file);
+        header('Content-Type:' . $type);
+        header('Content-Length: ' . filesize($file));
+        return readfile($file);
+    }
+
+    public function viewUserCompanyFile($id){
+        $file = User::where('id', $id)->first();
+        $file = base_path('/data') . '/user-files' . '/' . $file->company_logo;
+        $type = mime_content_type($file);
+        header('Content-Type:' . $type);
+        header('Content-Length: ' . filesize($file));
+        return readfile($file);
+    }
+
     function generateRandomString($length = 10) {
         return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
     }
