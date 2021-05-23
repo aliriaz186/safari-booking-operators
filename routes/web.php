@@ -66,3 +66,4 @@ Route::get('/add-tour', function () {
 });
 Route::post('add-tour', "DashboardController@addTour")->middleware('dashboard');
 Route::get('show-tour-image/{id}', "DashboardController@showTourImage")->middleware('dashboard');
+Route::get('view-tour-icon/{id}', "DashboardController@showTourIconOnLandingPage");

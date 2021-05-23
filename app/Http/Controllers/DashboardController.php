@@ -37,6 +37,16 @@ use services\email_services\SendEmailService;
 
 class DashboardController extends Controller
 {
+    public function showTourIconOnLandingPage($tourId)
+    {
+        $file = Tours::where('id', $tourId)->first();
+        $file = base_path('/data') . '/user-files' . '/' . $file->picture;
+        $type = mime_content_type($file);
+        header('Content-Type:' . $type);
+        header('Content-Length: ' . filesize($file));
+        return readfile($file);
+    }
+
     public function tours()
     {
         $userId = Session::get('userId');
