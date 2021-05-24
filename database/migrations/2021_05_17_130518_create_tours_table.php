@@ -19,6 +19,7 @@ class CreateToursTable extends Migration
             $table->string('picture');
             $table->string('title');
             $table->integer('price');
+            $table->string('country_name')->nullable();
             $table->longText('description');
             $table->string('total_days');
             $table->string('game_drives')->nullable();

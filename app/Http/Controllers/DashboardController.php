@@ -200,6 +200,7 @@ class DashboardController extends Controller
             $tours = new Tours();
             $tours->user_id = Session::get('userId');
             $tours->title = $request->title;
+            $tours->country_name = $request->tourCountry;
             $tours->price = $request->price;
             $tours->description = $request->description;
             $tours->total_days = $request->totalDays;
