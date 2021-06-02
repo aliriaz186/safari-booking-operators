@@ -7,6 +7,7 @@ use App\Certificates;
 use App\CompanyDestinations;
 use App\CompanyOffice;
 use App\Subscription;
+use App\TourPhotos;
 use App\User;
 use App\UserCardDetails;
 use App\UserTokens;
@@ -204,5 +205,24 @@ class AuthController extends Controller
 
     public function privacyPolicy(){
         return view('privacy-policy');
+    }
+
+    public function viewTourCoverPhoto($id){
+        $file = TourPhotos::where('tour_id', $id)->latest()->first();
+        $file = base_path('/data') . '/user-files' . '/' . $file->photo;
+        $type = mime_content_type($file);
+        header('Content-Type:' . $type);
+        header('Content-Length: ' . filesize($file));
+        return readfile($file);
+    }
+
+    public function showTourPhotos($tourPhotoId)
+    {
+        $file = TourPhotos::where('id', $tourPhotoId)->first();
+        $file = base_path('/data') . '/user-files' . '/' . $file->photo;
+        $type = mime_content_type($file);
+        header('Content-Type:' . $type);
+        header('Content-Length: ' . filesize($file));
+        return readfile($file);
     }
 }
