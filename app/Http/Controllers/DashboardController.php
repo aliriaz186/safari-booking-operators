@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\AccommodationAndMeal;
+use App\Bid;
 use App\CancelAutoRenew;
 use App\CertificateFiles;
 use App\Certificates;
@@ -20,9 +21,11 @@ use App\Tours;
 use App\User;
 use App\UserCardDetails;
 use App\UserTokens;
+use Firebase\JWT\JWT;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use services\email_messages\BidMessage;
 use services\email_messages\ForgotPasswordMessage;
 use services\email_messages\ResetPassword;
 use services\email_messages\WorkProtected;
@@ -52,6 +55,64 @@ class DashboardController extends Controller
         $userId = Session::get('userId');
         $tours = Tours::where('user_id', $userId)->get();
         return view('dashboard.tours')->with(['tours' => $tours]);
+    }
+
+    public function bids()
+    {
+        $userId = Session::get('userId');
+        $bids = Bid::where('operator_id', $userId)->get();
+        return view('dashboard.bids')->with(['bids' => $bids]);
+    }
+
+    public function rejectBid($bidId)
+    {
+        $bid = Bid::where('id', $bidId)->first();
+        $bid->status = 'Rejected';
+        $bid->update();
+        $subject = new SendEmailService(new EmailSubject("Your Bid is Rejected on ". env('APP_NAME')));
+        $mailTo = new EmailAddress($bid->email);
+        $invitationMessage = new BidMessage();
+        $operatorName = User::where('id', $bid->operator_id)->first()['company_name'];
+        $tourTitle = Tours::where('id', $bid->tour_id)->first()['title'];
+        $emailBody = $invitationMessage->bidMessageBody($operatorName, $tourTitle, $bid->amount);
+        $body = new EmailBody($emailBody);
+        $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
+        $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
+        $result = $sendEmail->send($emailMessage);
+        session()->flash('msg', 'Bid Rejected Successfully!');
+        return redirect()->back();
+    }
+
+    public function acceptBid($bidId)
+    {
+        $bid = Bid::where('id', $bidId)->first();
+        $bid->status = 'Accepted';
+        $bid->update();
+        $subject = new SendEmailService(new EmailSubject("Your Bid is Accepted on ". env('APP_NAME')));
+        $mailTo = new EmailAddress($bid->email);
+        $invitationMessage = new BidMessage();
+        $operatorName = User::where('id', $bid->operator_id)->first()['name'];
+        $tourTitle = Tours::where('id', $bid->tour_id)->first()['title'];
+        $jwt =JWT::encode(['customer_email' => $bid->email,'operator_id' => $bid->operator_id, 'tour_id' => $bid->tour_id], 'secret-2021');
+        $emailBody = $invitationMessage->bidAcceptMessageBody($operatorName, $tourTitle, $bid->amount, $jwt);
+        $body = new EmailBody($emailBody);
+        $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
+        $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
+        $result = $sendEmail->send($emailMessage);
+        session()->flash('msg', 'Bid Accepted Successfully!');
+        return redirect()->back();
+    }
+
+    public function customerPayment($token)
+    {
+        $token = JWT::decode($token, 'secret-2021', array('HS256'));
+        $customerEmail  = $token->customer_email;
+        $operatorId  = $token->operator_id;
+        $tourId  = $token->tour_id;
+        $operator = User::where('id', $operatorId)->first();
+        $tour = Tours::where('id', $tourId)->first();
+        $bidAmount = Bid::where('operator_id', $operatorId)->where('tour_id', $tourId)->first()['amount'];
+        return view('customer-payment')->with(['bidAmount' => $bidAmount,'tour' => $tour,'operator' => $operator,'customerEmail' => $customerEmail,'operatorId' => $operatorId,'tourId' => $tourId]);
     }
 
     public function dashboard()

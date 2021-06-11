@@ -69,3 +69,7 @@ Route::get('show-tour-image/{id}', "DashboardController@showTourImage")->middlew
 Route::get('view-tour-icon/{id}', "DashboardController@showTourIconOnLandingPage");
 Route::get('view-tour-cover-photo/{id}', "AuthController@viewTourCoverPhoto");
 Route::get('show-tour-photos/{id}', "AuthController@showTourPhotos");
+Route::get('bids', "DashboardController@bids")->middleware('dashboard');
+Route::get('reject-bid/{id}', "DashboardController@rejectBid")->middleware('dashboard');
+Route::get('accept-bid/{id}', "DashboardController@acceptBid")->middleware('dashboard');
+Route::get('customer-payment/{token}', "DashboardController@customerPayment");
