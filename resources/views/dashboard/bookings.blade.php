@@ -13,7 +13,7 @@
                 <h4 style="color: black">{{\Illuminate\Support\Facades\Session::get("msg")}}</h4>
             </div>
         @endif
-        <h3 style="letter-spacing: 3px;margin-top: 20px" class="mt-4 mb-3">Bids</h3>
+        <h3 style="letter-spacing: 3px;margin-top: 20px" class="mt-4 mb-3">Bookings</h3>
         {{--            <div>--}}
         {{--                <button data-toggle="modal" data-target="#myModal" class="btn btn-success">ADD NEW OFFICE</button>--}}
         {{--            </div>--}}
@@ -44,28 +44,16 @@
                                    data-toggle="modal" data-target="#myModal"
                                    style="text-decoration: underline;cursor: pointer">
                                     View</a></td>
-                            @if($item->status == 'Pending')
+                            @if($item->status == 'Booked')
                                 <td>
-                                    <a class="btn btn-success" href="{{url('/accept-bid/'.$item->id)}}">
-                                        Accept</a> | <a class="btn btn-danger" href="{{url('/reject-bid/'.$item->id)}}">
-                                        Reject</a>
+                                    <a class="btn btn-success" href="{{url('/completed-bid/'.$item->id)}}">
+                                        Mark as Complete</a>
                                 </td>
-                            @elseif($item->status == 'Accepted')
-                                <td style="color: royalblue">
-                                    Waiting For Customer
-                                </td>
-                            @elseif($item->status == 'Rejected')
-                                <td style="color: red">
-                                    Bid Rejected
-                                </td>
-                                @elseif($item->status == 'Booked')
-                                <td style="color: blue">
-                                    Bid Booked
-                                </td>
-                                @elseif($item->status == 'Completed')
+                            @elseif($item->status == 'Completed')
                                 <td style="color: green">
                                     Completed
                                 </td>
+
                             @endif
 
                         </tr>
@@ -73,7 +61,7 @@
                 @else
                     <tr>
                         <td></td>
-                        <td class="text-center">No Bids Found Yet!</td>
+                        <td class="text-center">No Bookings Found Yet!</td>
                         <td></td>
                     </tr>
                 @endif

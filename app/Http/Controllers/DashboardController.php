@@ -50,6 +50,73 @@ class DashboardController extends Controller
         return readfile($file);
     }
 
+    public function customerPostPayment(Request $request)
+    {
+        try {
+
+                    $stripe = \Cartalyst\Stripe\Laravel\Facades\Stripe::setApiKey(env('STRIPE_SECRET'));
+                    $token = $stripe->tokens()->create([
+                        'card' => [
+                            'number' => $request->cardNumber,
+                            'exp_month' => $request->expiryMonth,
+                            'exp_year' => $request->expiryYear,
+                            'cvc' => $request->cvv,
+                        ],
+                    ]);
+
+                    if (!isset($token['id'])) {
+                        return redirect()->back()->withErrors("Token Id does not Exists! Please try again!");
+                    }
+
+                    $charge = $stripe->charges()->create([
+                        'card' => $token['id'],
+                        'currency' => 'GBP',
+                        'amount' => $request->totalAmount,
+                        'description' => 'wallet',
+                    ]);
+                    if ($charge['status'] != 'succeeded') {
+                        return redirect()->back()->withErrors("Error in your payment method! Please try again!");
+                    }
+
+                    $customerEmail  = $request->customerEmail;
+                    $operatorId  = $request->operatorId;
+                    $tourId  = $request->tourId;
+                    $operator = User::where('id', $operatorId)->first();
+                    $tour = Tours::where('id', $tourId)->first();
+                    $bid = Bid::where('operator_id', $operatorId)->where('tour_id', $tourId)->first();
+                    $bid->status = 'Booked';
+                    $bid->update();
+
+                    $subject = new SendEmailService(new EmailSubject("Your Tour is Booked on ". env('APP_NAME')));
+                    $mailTo = new EmailAddress($customerEmail);
+                    $invitationMessage = new BidMessage();
+                    $operator = User::where('id', $bid->operator_id)->first();
+                    $tourTitle = Tours::where('id', $bid->tour_id)->first()['title'];
+                    $emailBody = $invitationMessage->bidBookedMessageToCustomer($operator, $tourTitle, $bid->amount);
+                    $body = new EmailBody($emailBody);
+                    $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
+                    $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
+                    $result = $sendEmail->send($emailMessage);
+
+                    $subject = new SendEmailService(new EmailSubject("A customer booked your Tour on ". env('APP_NAME')));
+                    $operator = User::where('id', $bid->operator_id)->first();
+                    $mailTo = new EmailAddress($operator->email);
+                    $invitationMessage = new BidMessage();
+                    $tourTitle = Tours::where('id', $bid->tour_id)->first()['title'];
+                    $bid3 = Bid::where('operator_id', $operatorId)->where('tour_id', $tourId)->first();
+                    $emailBody = $invitationMessage->bidBookedMessageToOperator($tourTitle, $bid3);
+                    $body = new EmailBody($emailBody);
+                    $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
+                    $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
+                    $result = $sendEmail->send($emailMessage);
+
+                return view('payment-success')->with(['operator' => $operator]);
+
+        } catch (\Exception $exception) {
+            return redirect()->back()->withErrors([$exception->getMessage()]);
+        }
+    }
+
     public function tours()
     {
         $userId = Session::get('userId');
@@ -64,43 +131,85 @@ class DashboardController extends Controller
         return view('dashboard.bids')->with(['bids' => $bids]);
     }
 
+    public function bookings()
+    {
+        $userId = Session::get('userId');
+        $bids = Bid::where('operator_id', $userId)->whereIn('status', ['Booked', 'Completed'])->get();
+        return view('dashboard.bookings')->with(['bids' => $bids]);
+    }
+
     public function rejectBid($bidId)
     {
-        $bid = Bid::where('id', $bidId)->first();
-        $bid->status = 'Rejected';
-        $bid->update();
-        $subject = new SendEmailService(new EmailSubject("Your Bid is Rejected on ". env('APP_NAME')));
-        $mailTo = new EmailAddress($bid->email);
-        $invitationMessage = new BidMessage();
-        $operatorName = User::where('id', $bid->operator_id)->first()['company_name'];
-        $tourTitle = Tours::where('id', $bid->tour_id)->first()['title'];
-        $emailBody = $invitationMessage->bidMessageBody($operatorName, $tourTitle, $bid->amount);
-        $body = new EmailBody($emailBody);
-        $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
-        $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
-        $result = $sendEmail->send($emailMessage);
-        session()->flash('msg', 'Bid Rejected Successfully!');
-        return redirect()->back();
+
+        try{
+            $bid = Bid::where('id', $bidId)->first();
+            $bid->status = 'Rejected';
+            $bid->update();
+            $subject = new SendEmailService(new EmailSubject("Your Bid is Rejected on ". env('APP_NAME')));
+            $mailTo = new EmailAddress($bid->email);
+            $invitationMessage = new BidMessage();
+            $operatorName = User::where('id', $bid->operator_id)->first()['company_name'];
+            $tourTitle = Tours::where('id', $bid->tour_id)->first()['title'];
+            $emailBody = $invitationMessage->bidMessageBody($operatorName, $tourTitle, $bid->amount);
+            $body = new EmailBody($emailBody);
+            $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
+            $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
+            $result = $sendEmail->send($emailMessage);
+            session()->flash('msg', 'Bid Rejected Successfully!');
+            return redirect()->back();
+        }catch(\Exception $exception){
+            return redirect()->back()->withErrors([$exception->getMessage()]);
+        }
     }
 
     public function acceptBid($bidId)
     {
-        $bid = Bid::where('id', $bidId)->first();
-        $bid->status = 'Accepted';
-        $bid->update();
-        $subject = new SendEmailService(new EmailSubject("Your Bid is Accepted on ". env('APP_NAME')));
-        $mailTo = new EmailAddress($bid->email);
-        $invitationMessage = new BidMessage();
-        $operatorName = User::where('id', $bid->operator_id)->first()['name'];
-        $tourTitle = Tours::where('id', $bid->tour_id)->first()['title'];
-        $jwt =JWT::encode(['customer_email' => $bid->email,'operator_id' => $bid->operator_id, 'tour_id' => $bid->tour_id], 'secret-2021');
-        $emailBody = $invitationMessage->bidAcceptMessageBody($operatorName, $tourTitle, $bid->amount, $jwt);
-        $body = new EmailBody($emailBody);
-        $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
-        $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
-        $result = $sendEmail->send($emailMessage);
-        session()->flash('msg', 'Bid Accepted Successfully!');
-        return redirect()->back();
+        try{
+            $bid = Bid::where('id', $bidId)->first();
+            $bid->status = 'Accepted';
+            $bid->update();
+            $subject = new SendEmailService(new EmailSubject("Your Bid is Accepted on ". env('APP_NAME')));
+            $mailTo = new EmailAddress($bid->email);
+            $invitationMessage = new BidMessage();
+            $operatorName = User::where('id', $bid->operator_id)->first()['name'];
+            $tourTitle = Tours::where('id', $bid->tour_id)->first()['title'];
+            $jwt =JWT::encode(['customer_email' => $bid->email,'operator_id' => $bid->operator_id, 'tour_id' => $bid->tour_id], 'secret-2021');
+            $emailBody = $invitationMessage->bidAcceptMessageBody($operatorName, $tourTitle, $bid->amount, $jwt);
+            $body = new EmailBody($emailBody);
+            $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
+            $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
+            $result = $sendEmail->send($emailMessage);
+            session()->flash('msg', 'Bid Accepted Successfully!');
+            return redirect()->back();
+        }catch(\Exception $exception){
+            return redirect()->back()->withErrors([$exception->getMessage()]);
+        }
+
+    }
+
+    public function completedBid($bidId)
+    {
+        try{
+            $bid = Bid::where('id', $bidId)->first();
+            $bid->status = 'Completed';
+            $bid->update();
+            $subject = new SendEmailService(new EmailSubject("Your Tour is marked as Completed on ". env('APP_NAME')));
+            $mailTo = new EmailAddress($bid->email);
+            $invitationMessage = new BidMessage();
+            $operator = User::where('id', $bid->operator_id)->first();
+            $tourTitle = Tours::where('id', $bid->tour_id)->first()['title'];
+            $jwt =JWT::encode(['customer_email' => $bid->email,'operator_id' => $bid->operator_id, 'tour_id' => $bid->tour_id], 'secret-2021');
+            $emailBody = $invitationMessage->bidCompletedMessageBody($operator, $tourTitle, $bid->amount);
+            $body = new EmailBody($emailBody);
+            $emailMessage = new EmailMessage($subject->getEmailSubject(), $mailTo, $body);
+            $sendEmail = new EmailSender(new PhpMail(new MailConf("smtp.gmail.com", "admin@dispatch.com", "secret-2021")));
+            $result = $sendEmail->send($emailMessage);
+            session()->flash('msg', 'Bid Completed Successfully!');
+            return redirect()->back();
+        }catch(\Exception $exception){
+            return redirect()->back()->withErrors([$exception->getMessage()]);
+        }
+
     }
 
     public function customerPayment($token)
@@ -119,7 +228,11 @@ class DashboardController extends Controller
     {
         $userId = Session::get('userId');
         $user = User::where('id', $userId)->first();
-        return view('dashboard.home')->with(['user' => $user]);
+        $bids = Bid::where('operator_id', $userId)->count();
+        $pending = Bid::where('operator_id', $userId)->where('status', 'Pending')->count();
+        $rejected = Bid::where('operator_id', $userId)->where('status', 'Rejected')->count();
+        $confirmed = Bid::where('operator_id', $userId)->whereIn('status', ['Accepted', 'Booked', 'Completed'])->count();
+        return view('dashboard.home')->with(['user' => $user, 'bids' => $bids,'pending' => $pending,'rejected' => $rejected,'confirmed' => $confirmed,]);
     }
 
     public function showUploadNewWorkPage()

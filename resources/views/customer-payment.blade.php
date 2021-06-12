@@ -209,7 +209,22 @@
             <h4 style="font-weight: bold">10% of your Bid Amount is: <span>{{0.1 * (int)$bidAmount}} USD</span></h4>
         </div>
         <hr>
-        <form method="post" action="{{url("/customer-payment")}}">
+        @if($errors->any())
+        <div class="alert alert-danger">
+            <h4 style="color: black;font-size: 14px">{{$errors->first()}}</h4>
+        </div>
+        @endif
+        @if(\Illuminate\Support\Facades\Session::has('msg'))
+            <div class="alert alert-success" style="margin-bottom: 0px!important;">
+                <h4 style="color: black">{{\Illuminate\Support\Facades\Session::get("msg")}}</h4>
+            </div>
+        @endif
+    <br>
+        <form method="post" action="{{url("/customer-post-payment")}}">
+            @csrf
+            <input type="hidden" name="customerEmail" value="{{$customerEmail}}"/>
+            <input type="hidden" name="operatorId" value="{{$operatorId}}"/>
+            <input type="hidden" name="tourId" value="{{$tourId}}"/>
             <div class="row">
                 <div class="col-lg-6">
                     <div class="login-title" style="padding-top: 40px!important;">
@@ -266,23 +281,24 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="login-form">
-                        <div class="input-box" style="padding-top: 98px">
+                        <div class="input-box" style="padding-top: 100px">
                             <input type="text" placeholder="Card Number" required name="cardNumber">
                         </div>
                     </div>
                     <div class="login-form">
                         <div class="input-box mt-35">
                             <input type="text" placeholder="CVV" name="cvv" required>
+                            <input type="hidden" name="totalAmount" value="{{0.1 * (int)$bidAmount}}" />
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="row">
-                <div class="col-lg-3 mt-30">
+                <div class="col-lg-6 mt-30">
                     <button type="submit"
                             style="letter-spacing: 3px;border: none;cursor: pointer;padding: 1.0rem 3rem;text-transform: uppercase;width: 100%;border-radius: 5px;line-height: 18px;font-size: 15px !important;">
-                        Book
+                        Confirm Booking
                     </button>
                 </div>
             </div>
