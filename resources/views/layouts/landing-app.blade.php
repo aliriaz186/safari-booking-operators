@@ -297,7 +297,7 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="footer-about-1 mt-30" style="padding: 40px;padding-bottom: 0px">
                         <a href="{{url('')}}" style="color: black;font-size: 20px">{{env('APP_NAME')}}</a>
-                        <p style="padding-top: 0px">Address: {{env('APP_ADDRESS')}}</p>
+                        {{-- <p style="padding-top: 0px">Address: {{env('APP_ADDRESS')}}</p> --}}
 {{--                        <p style="padding-top: 0px">--}}
 {{--                            Company Registered in England & Wales No. 13335834--}}
 {{--                        </p>--}}
@@ -312,12 +312,12 @@
                 </div>
                 <div class="col-lg-4 col-md-4">
                     <div style="margin-top: 60px">
-                        <p style="padding: 2px">
+                        {{-- <p style="padding: 2px">
                             Email: <a href="mailto:{{env('APP_EMAIL')}}">{{env('APP_EMAIL')}}</a>
                         </p>
                         <p style="padding: 2px">
                             Tel: <a href="tel:{{env('APP_PHONE')}}">{{env('APP_PHONE')}}</a>
-                        </p>
+                        </p> --}}
                         <a target="_blank" href="#" class="fa fa-facebook facustom"></a>
                         <a target="_blank" href="#" class="fa fa-twitter facustom"></a>
                     </div>
@@ -325,7 +325,7 @@
             </div>
 
             <div style="margin-top: 30px">
-                <p style="text-align: center;padding: 20px;padding-top: 0px">Copyright 2021 @SafariBooking Operators. All Rights
+                <p style="text-align: center;padding: 20px;padding-top: 0px">Copyright 2021 @Breeze Safaris Operators. All Rights
                     Reserved</p>
             </div>
 
