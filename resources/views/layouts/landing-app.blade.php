@@ -200,15 +200,12 @@
     <div class="header-nav" style="top: 0px">
         <div class="container">
             <div class="row">
-                <div class="col-lg-5">
-
-                </div>
-                <div class="col-lg-6 ml-5">
+                <div class="col-lg-12">
                     <div class="navigation">
                         <nav class="navbar navbar-expand-lg navbar-light " style="margin-top: 30px;margin-bottom: 30px">
-                            <a class="navbar-brand" href="{{url('')}}" style="color: black;font-size: 30px">{{env('APP_NAME')}}</a>
+                            <a class="navbar-brand" href="{{url('')}}" style="color: black;font-size: 20px">{{env('APP_NAME')}}</a>
 
-                            <a class="navbar-brand-2" href="{{url('')}}" style="color: black;font-size: 30px">{{env('APP_NAME')}}</a>
+                            <a class="navbar-brand-2" href="{{url('')}}" style="color: black;font-size: 20px">{{env('APP_NAME')}}</a>
                             <!-- logo -->
                             <button class="navbar-toggler" type="button" data-toggle="collapse"
                                     data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
@@ -219,7 +216,7 @@
                             </button> <!-- navbar toggler -->
 
                             <div class="collapse navbar-collapse sub-menu-bar" id="navbarSupportedContent">
-                                {{--<ul class="navbar-nav ml-auto">--}}
+                                <ul class="navbar-nav ml-auto">
 {{--                                    <li class="nav-item active">--}}
 {{--                                        <a class="nav-link {{!\Request::is('/') ? 'blackcolorlink ' : ''}}{{\Request::is('/') ? 'activenavlink' : ''}}"--}}
 {{--                                           href="{{url('')}}">HOME</a>--}}
@@ -246,41 +243,41 @@
 {{--                                           href="{{url('reviews')}}">REVIEWS </a>--}}
 
 {{--                                    </li>--}}
-                                    {{--@if(!\Illuminate\Support\Facades\Session::has('userId'))--}}
-                                    {{--<li class="nav-item onlyonmobile">--}}
-                                        {{--<a class="nav-link"--}}
-                                           {{--href="{{url('/register')}}">REGISTER</a>--}}
-                                    {{--</li>--}}
-                                    {{--<li class="nav-item onlyonmobile">--}}
-                                        {{--<a class="nav-link"--}}
-                                           {{--href="{{url('/login')}}">SIGN IN</a>--}}
-                                    {{--</li>--}}
-                                    {{--@else--}}
-                                    {{--<li class="nav-item onlyonmobile">--}}
-                                        {{--<a class="nav-link"--}}
-                                           {{--href="{{url('/dashboard')}}">Dashboard</a>--}}
-                                    {{--</li>--}}
-                                    {{--@endif--}}
-                                {{--</ul>--}}
+                                    @if(!\Illuminate\Support\Facades\Session::has('userId'))
+                                    <li class="nav-item onlyonmobile">
+                                        <a class="nav-link"
+                                           href="{{url('/register')}}">REGISTER</a>
+                                    </li>
+                                    <li class="nav-item onlyonmobile">
+                                        <a class="nav-link"
+                                           href="{{url('/login')}}">SIGN IN</a>
+                                    </li>
+                                    @else
+                                    <li class="nav-item onlyonmobile">
+                                        <a class="nav-link"
+                                           href="{{url('/dashboard')}}">Dashboard</a>
+                                    </li>
+                                    @endif
+                                </ul>
                             </div> <!-- navbar collapse -->
-                            {{--@if(!\Illuminate\Support\Facades\Session::has('userId'))--}}
-                                {{--<div class="navbar-btn d-none d-sm-block">--}}
-                                    {{--<a class="main-btn" style="background: #6fc3e6!important;color: white"--}}
-                                       {{--href="{{url('/register')}}">REGISTER</a>--}}
-                                {{--</div>--}}
-                                {{--<div class="navbar-btn d-none d-sm-block">--}}
-                                    {{--<a class="main-btn" style="background: white!important;color: #6fc3e6"--}}
-                                       {{--href="{{url('/login')}}">SIGN IN</a>--}}
-                                {{--</div>--}}
-                            {{--@else--}}
-                                {{--<div class="navbar-btn d-none d-sm-block">--}}
-                                    {{--<a class="main-btn" style="background: #6fc3e6!important;color: white"--}}
-                                       {{--href="{{url('/dashboard')}}">Dashboard</a>--}}
-                                {{--</div>--}}
+                            @if(!\Illuminate\Support\Facades\Session::has('userId'))
+                                <div class="navbar-btn d-none d-sm-block">
+                                    <a class="main-btn" style="background: #6fc3e6!important;color: white"
+                                       href="{{url('/register')}}">REGISTER</a>
+                                </div>
+                                <div class="navbar-btn d-none d-sm-block">
+                                    <a class="main-btn" style="background: white!important;color: #6fc3e6"
+                                       href="{{url('/login')}}">SIGN IN</a>
+                                </div>
+                            @else
+                                <div class="navbar-btn d-none d-sm-block">
+                                    <a class="main-btn" style="background: #6fc3e6!important;color: white"
+                                       href="{{url('/dashboard')}}">Dashboard</a>
+                                </div>
                                 {{--                                <div class="navbar-btn d-none d-sm-block">--}}
                                 {{--                                    <a class="main-btn" href="{{url('/logout-user')}}">LOGOUT</a>--}}
                                 {{--                                </div>--}}
-                            {{--@endif--}}
+                            @endif
                         </nav>
                     </div> <!-- navigation -->
                 </div>
