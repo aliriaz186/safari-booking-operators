@@ -12,6 +12,7 @@ use App\CompanyOffice;
 use App\Exclusions;
 use App\Inclusions;
 use App\Rates;
+use App\ReviewsTable;
 use App\Routes;
 use App\Subscription;
 use App\TourActivities;
@@ -138,6 +139,13 @@ class DashboardController extends Controller
         return view('dashboard.bookings')->with(['bids' => $bids]);
     }
 
+    public function reviews()
+    {
+        $userId = Session::get('userId');
+        $reviewsTable = ReviewsTable::all();
+        return view('dashboard.reviews')->with(['reviews'=>$reviewsTable]);
+    }
+
     public function rejectBid($bidId)
     {
 
@@ -226,13 +234,8 @@ class DashboardController extends Controller
 
     public function dashboard()
     {
-        $userId = Session::get('userId');
-        $user = User::where('id', $userId)->first();
-        $bids = Bid::where('operator_id', $userId)->count();
-        $pending = Bid::where('operator_id', $userId)->where('status', 'Pending')->count();
-        $rejected = Bid::where('operator_id', $userId)->where('status', 'Rejected')->count();
-        $confirmed = Bid::where('operator_id', $userId)->whereIn('status', ['Accepted', 'Booked', 'Completed'])->count();
-        return view('dashboard.home')->with(['user' => $user, 'bids' => $bids,'pending' => $pending,'rejected' => $rejected,'confirmed' => $confirmed,]);
+        $userId = Session::get('adminId');
+        return view('dashboard.home');
     }
 
     public function showUploadNewWorkPage()

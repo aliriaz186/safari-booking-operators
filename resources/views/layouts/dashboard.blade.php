@@ -85,7 +85,7 @@ $user =  \App\User::where('id',\Illuminate\Support\Facades\Session::get('userId'
         <nav id="sidebar" class="sidebar-wrapper">
             <div class="sidebar-content">
                 <div class="sidebar-brand">
-                    <a class="navbar-brand" href="{{ url('/home') }}">Operator Dashboard</a>
+                    <a class="navbar-brand" href="{{ url('/home') }}">Admin Dashboard</a>
                     <div id="close-sidebar">
                         <i class="fas fa-times"></i>
                     </div>
@@ -97,7 +97,7 @@ $user =  \App\User::where('id',\Illuminate\Support\Facades\Session::get('userId'
 {{--                             alt="User picture">--}}
 {{--                    </div>--}}
                     <div class="user-info">
-                        <h4 style="color: white">Welcome {{$user->company_name}}</h4>
+                        <h4 style="color: white">Welcome Admin</h4>
                     </div>
                 </div>
 
@@ -110,44 +110,14 @@ $user =  \App\User::where('id',\Illuminate\Support\Facades\Session::get('userId'
                                 <span>DASHBOARD</span>
                             </a>
                         </li>
-                        <li  class="{{\Request::is('bookings') ? 'bgactivelink' : ''}}" style="border: 1px solid white;border-bottom: 0px">
-                            <a class="{{\Request::is('bookings') ? 'coloractivelink' : ''}}" href="{{url('bookings')}}">
+                        <li  class="{{\Request::is('reviews') ? 'bgactivelink' : ''}}" style="border: 1px solid white;border-bottom: 0px">
+                            <a class="{{\Request::is('reviews') ? 'coloractivelink' : ''}}" href="{{url('reviews')}}">
 {{--                                <i class="fas fa-users"></i>--}}
-                                <span>Bookings</span>
-                            </a>
-                        </li>
-                        <li class="{{\Request::is('bids') ? 'bgactivelink' : ''}}" style="border: 1px solid white;border-bottom: 0px">
-                            <a class="{{\Request::is('bids') ? 'coloractivelink' : ''}}" href="{{url('bids')}}" >
-{{--                                <i class="fas fa-users"></i>--}}
-                                <span>BIDS</span>
-                            </a>
-                        </li>
-                        <li class="{{\Request::is('tours') ? 'bgactivelink' : ''}}" style="border: 1px solid white;border-bottom: 0px">
-                            <a class="{{\Request::is('tours') ? 'coloractivelink' : ''}}" href="{{url('tours')}}">
-{{--                                <i class="fas fa-envelope-open"></i>--}}
-                                <span>TOURS</span>
-                            </a>
-                        </li>
-                        <li class="{{\Request::is('personal-details') ? 'bgactivelink' : ''}}" style="border: 1px solid white;border-bottom: 0px" >
-                            <a  class="{{\Request::is('personal-details') ? 'coloractivelink' : ''}}" href="{{url('personal-details')}}">
-{{--                                <i class="fas fa-envelope-open"></i>--}}
-                                <span>PERSONAL DETAILS</span>
-                            </a>
-                        </li>
-                        <li class="{{\Request::is('manage-offices') ? 'bgactivelink' : ''}}" style="border: 1px solid white;border-bottom: 0px">
-                            <a class="{{\Request::is('manage-offices') ? 'coloractivelink' : ''}}" href="{{url('manage-offices')}}">
-{{--                                <i class="fas fa-envelope-open"></i>--}}
-                                <span>Manage Offices</span>
-                            </a>
-                        </li>
-                        <li class="{{\Request::is('manage-destinations') ? 'bgactivelink' : ''}}" style="border: 1px solid white;border-bottom: 0px">
-                            <a class="{{\Request::is('manage-destinations') ? 'coloractivelink' : ''}}" href="{{url('manage-destinations')}}">
-{{--                                <i class="fas fa-envelope-open"></i>--}}
-                                <span>Manage Destinations</span>
+                                <span>REVIEWS</span>
                             </a>
                         </li>
                         <li class="" style="border: 1px solid white;">
-                            <a href="{{ route('logout-user') }}">
+                            <a href="#" onclick="signout()">
 {{--                                <i class="fas fa-user"></i>--}}
                                 <span>Logout</span>
                             </a>
@@ -169,6 +139,18 @@ $user =  \App\User::where('id',\Illuminate\Support\Facades\Session::get('userId'
 
 </div>
 <script>
+    function signout() {
+        $.ajax({
+            url: `{{env('APP_URL')}}/admin-logout`,
+            type: 'POST',
+            dataType: "JSON",
+            data: {"_token": "{{ csrf_token() }}"},
+            success: function (result) {
+                window.location.href = `{{env('APP_URL')}}/login`
+
+            },
+        });
+    }
     function logoutUser()
     {
         event.preventDefault();

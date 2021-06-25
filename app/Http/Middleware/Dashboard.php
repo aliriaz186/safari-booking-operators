@@ -17,9 +17,10 @@ class Dashboard
      */
     public function handle($request, Closure $next)
     {
-        if(empty(Session::get('userId'))){
-            Session::flush();
-            return redirect('/login')->withErrors(['Please login to access the dashboard']);
+        if (Session::has('adminId')) {
+            return $next($request);
+        } else {
+            return redirect('/login');
         }
         return $next($request);
     }

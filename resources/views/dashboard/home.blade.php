@@ -10,19 +10,7 @@
 
                 <div class="col-lg-6 col-md-6 col-sm-9">
                         <div class="sevices-item" style="height: 330px;padding: 30px;border: 2px solid #6b9ce8">
-                            <h4 class="title" style="padding-top: 0px">Welcome {{$user->company_name ?? 'user'}}</h4>
-                            <p>
-                                Bids Received: {{$bids ?? 0}}
-                            </p>
-                            <p>
-                                Bids Pending : {{$pending ?? 0}}
-                            </p>
-                            <p>
-                                Bids Rejected : {{$rejected ?? 0}}
-                            </p>
-                            <p>
-                                Bookings Confirmed : {{$confirmed ?? 0}}
-                            </p>
+                            <h4 class="title" style="padding-top: 0px">Welcome Admin</h4>
                         </div>
 
                 </div>
