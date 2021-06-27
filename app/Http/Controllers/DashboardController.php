@@ -401,19 +401,24 @@ class DashboardController extends Controller
                 }
             }
             $featureList = $request->featuresList;
-            foreach ($featureList as $item) {
-                $tourFeatures = new TourFeatures();
-                $tourFeatures->tour_id = $tours->id;
-                $tourFeatures->feature_id = $item;
-                $tourFeatures->save();
+            if(!empty($featureList )){
+                foreach ($featureList as $item) {
+                    $tourFeatures = new TourFeatures();
+                    $tourFeatures->tour_id = $tours->id;
+                    $tourFeatures->feature_id = $item;
+                    $tourFeatures->save();
+                }
             }
-            $activitiesList = $request->activitiesList;
-            foreach ($activitiesList as $item) {
-                $tourActivities = new TourActivities();
-                $tourActivities->tour_id = $tours->id;
-                $tourActivities->activity = $item;
-                $tourActivities->save();
+            if(!empty($featureList )){
+                $activitiesList = $request->activitiesList;
+                foreach ($activitiesList as $item) {
+                    $tourActivities = new TourActivities();
+                    $tourActivities->tour_id = $tours->id;
+                    $tourActivities->activity = $item;
+                    $tourActivities->save();
+                }
             }
+
             for ($j = 0; $j < (int)$request->totalDays; $j++) {
                 if (!empty($request['accommodationDay' . $j]) && !empty($request['accommodationName' . $j]) && !empty($request['accommodationMeal' . $j])) {
                     $accommodationAndMeal = new AccommodationAndMeal();
@@ -443,19 +448,26 @@ class DashboardController extends Controller
 
 
             $inclusionList = $request->inclusionList;
-            foreach ($inclusionList as $item) {
-                $inclusions = new Inclusions();
-                $inclusions->tour_id = $tours->id;
-                $inclusions->included_name = $item;
-                $inclusions->save();
+            if(!empty($inclusionList )){
+                foreach ($inclusionList as $item) {
+                    $inclusions = new Inclusions();
+                    $inclusions->tour_id = $tours->id;
+                    $inclusions->included_name = $item;
+                    $inclusions->save();
+                }
             }
+
+
             $exclusionList = $request->exclusionList;
-            foreach ($exclusionList as $item) {
-                $exclusion = new Exclusions();
-                $exclusion->tour_id = $tours->id;
-                $exclusion->excluded_name = $item;
-                $exclusion->save();
+            if(!empty($exclusionList )){
+                foreach ($exclusionList as $item) {
+                    $exclusion = new Exclusions();
+                    $exclusion->tour_id = $tours->id;
+                    $exclusion->excluded_name = $item;
+                    $exclusion->save();
+                }
             }
+
             if ($request->hasfile('tourPic')) {
                 $files = $request->file('tourPic');
                 foreach ($files as $file) {
@@ -472,6 +484,20 @@ class DashboardController extends Controller
         } catch (\Exception $exception) {
             return redirect()->back()->withErrors([$exception->getMessage()]);
         }
+    }
+
+    public function deleteTour($id){
+        $tour = Tours::where('id', $id)->first()->delete();
+        Routes::where('tour_id', $id)->delete();
+        TourFeatures::where('tour_id', $id)->delete();
+        TourActivities::where('tour_id', $id)->delete();
+        AccommodationAndMeal::where('tour_id', $id)->delete();
+        Rates::where('tour_id', $id)->delete();
+        Inclusions::where('tour_id', $id)->delete();
+        Exclusions::where('tour_id', $id)->delete();
+        TourPhotos::where('tour_id', $id)->delete();
+        session()->flash('msg', 'Tour Deleted Successfully!');
+        return redirect('tours');
     }
 
     public function manageOffices()

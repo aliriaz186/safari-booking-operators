@@ -16,7 +16,7 @@
             </div>
         @endif
         <h3 style="letter-spacing: 3px" class="mt-4 mb-3">ADD TOUR</h3>
-        <form method="post" action="{{url("/add-tour")}}" enctype="multipart/form-data">
+        <form method="post" action="{{url("/add-tour")}}" enctype="multipart/form-data" onsubmit="return validateForm()">
             {{csrf_field()}}
             <h4 style="text-decoration: underline">Basic Info :</h4>
             <div class="row">
@@ -24,15 +24,15 @@
                     <div class="login-form">
                         <div class="input-box mt-30">
                             <label>Title:</label><br>
-                            <input type="text" placeholder="Title*" name="title" required>
+                            <input type="text" placeholder="Title*" name="title" id="title">
                         </div>
                         <div class="input-box mt-30" style="margin-top: 10px">
                             <label>Price:</label><br>
-                            <input type="text" placeholder="Price*" name="price" required>
+                            <input type="text" placeholder="Price*" name="price" id="price">
                         </div>
                         <div class="input-box mt-30"style="margin-top: 10px">
                             <label>Tour Country:</label><br>
-                            <select id="selectCountry" name="tourCountry" required
+                            <select id="selectCountry" name="tourCountry"
                                     style="width: 100%;border: solid 2px rgba(102, 102, 102, 0.12);border-radius: 5px;height: 45px;padding-left: 30px;background-color: white;">
                                 <option value="">Choose Country</option>
                             </select>
@@ -61,7 +61,7 @@
                                 <option value="">Please Select Days</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
-                                <option value="2">2</option>
+                                <option value="3">3</option>
                                 <option value="4">4</option>
                                 <option value="5">5</option>
                                 <option value="6">6</option>
@@ -123,11 +123,11 @@
                         </div>
                         <div class="input-box mt-30" style="margin-top: 10px">
                             <label>Game Drives:</label><br>
-                            <input type="text" placeholder="Enter Game Drives" name="gameDrives" required>
+                            <input type="text" placeholder="Enter Game Drives" name="gameDrives">
                         </div>
                         <div class="input-box mt-30" style="margin-top: 10px">
                             <label>Getting Around:</label><br>
-                            <input type="text" placeholder="Enter Getting Around" name="gettingAround" required>
+                            <input type="text" placeholder="Enter Getting Around" name="gettingAround">
                         </div>
                         <div class="row mt-30" style="margin-top: 10px">
                             <div class="col-md-1"><input class="form-check-input" type="checkbox"
@@ -244,6 +244,8 @@
                 </div>
             </div>
             <br>
+            <br>
+            <div id="errorDiv"  style="display: none;color:maroon"></div>
             <br>
             <div class="form-group">
                 <button type="submit"
@@ -485,6 +487,52 @@
                 }
                 reader.readAsDataURL(input.files[0]);
             }
+        }
+
+        function validateForm(){
+
+            document.getElementById('errorDiv').style.display = 'none';
+            document.getElementById('errorDiv').innerHTML = '';
+            let title = document.getElementById('title').value;
+            let price = document.getElementById('price').value;
+            let country = document.getElementById('selectCountry').value;
+            let pic = document.getElementById('pic').files;
+            let description = document.getElementById('description').value;
+            let totalDays = document.getElementById('totalDays').value;
+
+
+            if(title === '' || title === undefined){
+                document.getElementById('errorDiv').style.display = 'block';
+                document.getElementById('errorDiv').innerHTML = 'Title is required';
+                return false;
+            }
+            if(price === '' || price === undefined){
+                document.getElementById('errorDiv').style.display = 'block';
+                document.getElementById('errorDiv').innerHTML = 'Price is required';
+                return false;
+            }
+            if(country === '' || country === undefined){
+                document.getElementById('errorDiv').style.display = 'block';
+                document.getElementById('errorDiv').innerHTML = 'Country is required';
+                return false;
+            }
+            if(pic.length <= 0){
+                document.getElementById('errorDiv').style.display = 'block';
+                document.getElementById('errorDiv').innerHTML = 'Picture is required';
+                return false;
+            }
+            if(description === '' || description === undefined){
+                document.getElementById('errorDiv').style.display = 'block';
+                document.getElementById('errorDiv').innerHTML = 'Description is required';
+                return false;
+            }
+            if(totalDays === '' || totalDays === undefined){
+                document.getElementById('errorDiv').style.display = 'block';
+                document.getElementById('errorDiv').innerHTML = 'Total Days is required';
+                return false;
+            }
+           return true;
+
         }
     </script>
     <script src="{{url('')}}/js/select2.min.js"></script>

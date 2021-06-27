@@ -26,7 +26,7 @@
                     <th>Price</th>
                     <th>Description</th>
 {{--                    <th>Address</th>--}}
-{{--                    <th>Options</th>--}}
+                   <th>Options</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -37,11 +37,12 @@
                             <td>{{$item->title}}</td>
                             <td>{{$item->price}}</td>
                             <td>{{$item->description}}</td>
+
 {{--                            <td>{{$item->address}}</td>--}}
-{{--                            <td>--}}
-{{--                                <a class="btn btn-danger" href="{{url('/delete-office/'.$item->id)}}" id="deletebtn{{$item->id}}">--}}
-{{--                                DELETE</a>--}}
-{{--                            </td>--}}
+                           <td style="width: 20%">
+                               <a class="btn btn-success" href="{{url('edit-tour')}}/{{$item->id}}"> EDIT</a>
+                               <a class="btn btn-danger" href="{{url('delete-tour')}}/{{$item->id}}"> DELETE</a>
+                           </td>
                         </tr>
                     @endforeach
                 @else
